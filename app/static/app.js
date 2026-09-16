@@ -94,6 +94,44 @@
     return options;
   }
 
+  function supportsSaveLocationPicker() {
+    return typeof window.showSaveFilePicker === "function" ||
+      typeof window.showDirectoryPicker === "function";
+  }
+
+  async function chooseSaveFileHandle(filename) {
+    if (typeof window.showSaveFilePicker === "function") {
+      return window.showSaveFilePicker(savePickerOptions(filename));
+    }
+    if (typeof window.showDirectoryPicker === "function") {
+      const directoryHandle = await window.showDirectoryPicker({
+        mode: "readwrite",
+        startIn: "downloads",
+      });
+      return directoryHandle.getFileHandle(filename, { create: true });
+    }
+    throw new Error("このブラウザは保存先の選択に対応していません");
+  }
+
+  function startBrowserDownload(button) {
+    const url = button.dataset.savePickerUrl;
+    if (!url) {
+      showSavePickerMessage("保存できるファイルがありません");
+      return;
+    }
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = button.dataset.savePickerFilename || "youtube-file";
+    link.hidden = true;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    showSavePickerMessage(
+      "このブラウザではサイトから保存先を選べません。Chromeのダウンロード設定で「保存場所を確認」を有効にしてください。",
+      "info",
+    );
+  }
+
   async function saveWithPicker(button) {
     const url = button.dataset.savePickerUrl;
     const filename = button.dataset.savePickerFilename || "youtube-file";
@@ -101,15 +139,10 @@
       showSavePickerMessage("保存できるファイルがありません");
       return;
     }
-    if (typeof window.showSaveFilePicker !== "function") {
-      showSavePickerMessage("このブラウザは保存先の選択に対応していません。通常の保存ボタンをお使いください。", "info");
-      return;
-    }
-
     setButtonBusy(button, true, "保存しています…");
     try {
       // This must run directly from the user's click while transient activation is active.
-      const fileHandle = await window.showSaveFilePicker(savePickerOptions(filename));
+      const fileHandle = await chooseSaveFileHandle(filename);
       const response = await fetch(url, { credentials: "same-origin" });
       if (!response.ok) {
         if (response.status === 401) {
@@ -121,7 +154,7 @@
 
       const writable = await fileHandle.createWritable();
       try {
-        if (response.body) {
+        if (response.body?.pipeTo) {
           await response.body.pipeTo(writable);
         } else {
           await writable.write(await response.blob());
@@ -143,14 +176,24 @@
 
   function initSavePickerButtons() {
     const buttons = document.querySelectorAll(".save-picker-button");
-    const supported = typeof window.showSaveFilePicker === "function";
+    const supported = supportsSaveLocationPicker();
     buttons.forEach((button) => {
-      if (!supported) return;
       button.hidden = false;
-      button.addEventListener("click", () => saveWithPicker(button));
+      button.addEventListener("click", () => {
+        if (supportsSaveLocationPicker()) {
+          saveWithPicker(button);
+        } else {
+          startBrowserDownload(button);
+        }
+      });
     });
     const help = document.getElementById("save-picker-help");
-    if (help && supported) help.hidden = false;
+    if (help) {
+      help.textContent = supported
+        ? "対応ブラウザでは、保存先のフォルダとファイル名を選べます。"
+        : "このChromeではサイトから保存先を選べないため、Chromeのダウンロード設定を使用します。";
+      help.hidden = false;
+    }
   }
 
   function populateSelect(select, items, selectedValue) {
