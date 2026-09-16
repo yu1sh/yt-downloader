@@ -1,4 +1,5 @@
 {$DOMAIN:localhost} {
+    tls internal
     encode gzip
 
     header {

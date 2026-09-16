@@ -26,7 +26,7 @@ Debian 12以降、2 vCPU、メモリ4GB、空き容量30GB以上を初期想定�
    openssl rand -hex 32
    ```
 
-   表示された値を`.env`の`APP_SECRET_KEY`へ設定し、`DOMAIN`をDNSでサーバーへ向けたホスト名へ変更します。一般公開せず家庭内やVPNからだけ使う場合は、`DOMAIN`を内部DNS名へしてファイアウォールで外部アクセスを閉じてください。
+   表示された値を`.env`の`APP_SECRET_KEY`へ設定し、`DOMAIN`を公開用ホスト名へ変更します。Cloudflare Tunnel経由で公開する場合は、Tunnelのhostnameと同じ値にしてください。
 
 2. 起動します。
 
@@ -37,7 +37,27 @@ Debian 12以降、2 vCPU、メモリ4GB、空き容量30GB以上を初期想定�
    curl -fsS https://downloads.example.com/healthz
    ```
 
-   `downloads.example.com`は設定したホスト名に置き換えてください。公開ドメインならCaddyが証明書を取得します。`localhost`を使う開発環境では、ブラウザのHTTPS証明書警告が表示されることがあります。
+   `downloads.example.com`は設定したホスト名に置き換えてください。このComposeはCaddyをlocalhostの80/443だけにbindし、originでは内部証明書を使います。Cloudflare Tunnel経由ではCloudflare側の公開HTTPSを利用します。
+
+## Cloudflare Tunnelで公開する場合
+
+既存の`cloudflared`設定へ、アプリ用の入口を追加します。Tunnelの設定ファイルに次のようなルートを加え、`<公開ホスト名>`を`.env`の`DOMAIN`と一致させてください。
+
+```yaml
+  - hostname: <公開ホスト名>
+    service: https://localhost:443
+    originRequest:
+      noTLSVerify: true
+```
+
+DNSルートをまだ作っていない場合は、Tunnelの認証済み環境で次を実行します。
+
+```sh
+cloudflared tunnel route dns <トンネル名またはID> <公開ホスト名>
+sudo systemctl restart cloudflared
+```
+
+`https://<公開ホスト名>/healthz`が`{"status":"ok"}`を返すことと、ログイン画面が表示されることを確認してください。
 
 3. 最初の管理者を作成します。
 
@@ -98,4 +118,3 @@ docker compose logs -f app worker cleanup caddy
 - URLはYouTubeの対応ホストと動画IDへ正規化し、任意URL・任意コマンド・任意保存パスは受け付けません。
 - セッションCookieはHttpOnly、SameSite=Laxです。本番では`COOKIE_SECURE=true`を設定し、Caddy経由のHTTPSだけで利用してください。
 - アプリ、worker、cleanupはroot以外で実行し、コンテナをread-onlyにしています。書き込み先は共有データボリュームと一時領域に限定しています。
-
