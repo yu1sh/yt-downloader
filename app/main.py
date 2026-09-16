@@ -88,7 +88,7 @@ class InspectRequest(BaseModel):
 class JobCreateRequest(BaseModel):
     video_id: str = Field(min_length=11, max_length=11, pattern=r"^[A-Za-z0-9_-]{11}$")
     mode: Literal["simple", "detailed"] = "simple"
-    target: Literal["video", "audio"] = "video"
+    target: Literal["video", "audio"] = "audio"
     video_format: Literal["mp4", "webm"] = "mp4"
     audio_format: Literal["mp3", "m4a", "opus"] = "mp3"
     max_height: Literal[360, 480, 720, 1080, 1440, 2160] = 720
@@ -517,6 +517,7 @@ def create_job(payload: JobCreateRequest, request: Request, db: DB, user: USER):
     if shutil.disk_usage(settings.data_dir).free < settings.min_free_bytes:
         raise HTTPException(status_code=507, detail={"code": "storage_low", "message": "サーバーの空き容量が少ないため、現在保存できません"})
 
+    mp3_quality = 320 if payload.mode == "simple" and payload.target == "audio" else payload.mp3_quality
     job_id = str(uuid4())
     now = iso_now()
     title = str(info.get("title") or "YouTube video")[:500]
@@ -538,7 +539,7 @@ def create_job(payload: JobCreateRequest, request: Request, db: DB, user: USER):
             payload.video_format,
             payload.audio_format,
             payload.max_height,
-            payload.mp3_quality,
+            mp3_quality,
             now,
             now,
         ),

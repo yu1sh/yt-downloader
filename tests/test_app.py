@@ -82,6 +82,9 @@ async def test_login_and_authenticated_page(async_client):
     assert page.status_code == 200
     assert "動画や音声を、" in page.text
     assert "動画を確認" in page.text
+    assert "MP3・320kbps" in page.text
+    assert page.text.index('value="audio"') < page.text.index('value="video"')
+    assert 'value="audio" checked' in page.text
     assert csrf
 
 
@@ -138,6 +141,36 @@ async def test_api_requires_csrf_and_validates_ownership(async_client, test_sett
     listed = (await async_client.get("/api/jobs")).json()["jobs"]
     assert [item["id"] for item in listed] == [job["id"]]
     assert test_settings.db_path.exists()
+
+
+@pytest.mark.anyio
+async def test_simple_audio_always_uses_320_kbps(async_client, monkeypatch):
+    fake_info = {
+        "title": "音声設定テスト",
+        "thumbnail": "",
+        "duration": 12,
+        "formats": [
+            {"format_id": "v", "vcodec": "avc1.640028", "acodec": "none", "height": 720, "ext": "mp4", "filesize": 1000},
+            {"format_id": "a", "vcodec": "none", "acodec": "mp4a.40.2", "height": None, "ext": "m4a", "filesize": 500},
+        ],
+    }
+    monkeypatch.setattr("app.main.extract_video_info", lambda normalized, current_settings: fake_info)
+    csrf = await login(async_client)
+
+    response = await async_client.post(
+        "/api/jobs",
+        headers={"X-CSRF-Token": csrf},
+        json={
+            "video_id": "dQw4w9WgXcQ",
+            "mode": "simple",
+            "target": "audio",
+            "audio_format": "mp3",
+            "mp3_quality": 128,
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["mp3_quality"] == 320
 
 
 @pytest.mark.anyio

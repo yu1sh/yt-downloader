@@ -60,17 +60,17 @@
         <legend>何を保存しますか？</legend>
         <div class="choice-grid choice-grid-two">
           <label class="choice-card is-selected">
-            <input type="radio" name="target" value="video" checked>
-            <span class="choice-content">
-              <span class="choice-title">動画で保存</span>
-              <span class="choice-description">映像と音声を一緒に保存</span>
-            </span>
-          </label>
-          <label class="choice-card">
-            <input type="radio" name="target" value="audio">
+            <input type="radio" name="target" value="audio" checked>
             <span class="choice-content">
               <span class="choice-title">音声だけ保存</span>
               <span class="choice-description">音楽や講義を音声ファイルに</span>
+            </span>
+          </label>
+          <label class="choice-card">
+            <input type="radio" name="target" value="video">
+            <span class="choice-content">
+              <span class="choice-title">動画で保存</span>
+              <span class="choice-description">映像と音声を一緒に保存</span>
             </span>
           </label>
         </div>
@@ -85,7 +85,7 @@
         </div>
         <div id="simple-audio-note" class="setting-summary" hidden>
           <span class="setting-summary-title">かんたん設定</span>
-          <span>MP3・192kbps</span>
+          <span>MP3・320kbps</span>
           <span class="setting-dot" aria-hidden="true">•</span>
           <span>幅広い機器で再生できます</span>
         </div>
@@ -188,4 +188,3 @@
   </section>
 </div>
 {% endblock %}
-

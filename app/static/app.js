@@ -79,7 +79,7 @@
   }
 
   function selectedTarget() {
-    return document.querySelector('input[name="target"]:checked')?.value || "video";
+    return document.querySelector('input[name="target"]:checked')?.value || "audio";
   }
 
   function selectedSimpleHeight() {
@@ -302,7 +302,9 @@
         video_format: detailed ? (document.getElementById("video-format")?.value || "mp4") : "mp4",
         audio_format: detailed ? (document.getElementById("audio-format")?.value || "mp3") : "mp3",
         max_height: detailed && target === "video" ? videoHeight : selectedSimpleHeight(),
-        mp3_quality: detailed && target === "audio" ? Number(document.getElementById("mp3-quality")?.value || 192) : 192,
+        mp3_quality: detailed && target === "audio"
+          ? Number(document.getElementById("mp3-quality")?.value || 192)
+          : (target === "audio" ? 320 : 192),
       };
       setAlert("");
       setButtonBusy(submitButton, true, "準備しています…");
