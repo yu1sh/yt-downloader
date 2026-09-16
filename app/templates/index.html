@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}動画や音声を保存 — そら保存{% endblock %}
+{% block content %}
+<section class="hero-section">
+  <div class="hero-inner">
+    <p class="eyebrow">あなた専用の保存場所</p>
+    <h1>動画や音声を、<span class="blue-text">かんたん保存。</span></h1>
+    <p class="hero-copy">YouTubeのリンクを貼り付けるだけ。<br class="small-only">スマホにもパソコンにも保存できます。</p>
+  </div>
+</section>
+
+<div class="page-wrap">
+  <section class="surface-section workspace" aria-labelledby="save-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">STEP 1</p>
+        <h2 id="save-heading">保存する動画を選ぶ</h2>
+        <p>リンクを貼り付けて、動画の情報を確認します。</p>
+      </div>
+      <div class="mode-control">
+        <span class="mode-label">操作モード</span>
+        <div class="mode-toggle" role="group" aria-label="操作モードを選ぶ">
+          <button type="button" class="mode-button is-active" data-mode="simple" aria-pressed="true">簡単モード</button>
+          <button type="button" class="mode-button" data-mode="detailed" aria-pressed="false">詳細モード</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="app-alert" class="notice" role="alert" hidden></div>
+
+    <form id="inspect-form" class="url-form" novalidate>
+      <div class="field">
+        <label for="youtube-url">YouTubeのリンク</label>
+        <div class="input-action-row">
+          <input id="youtube-url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://www.youtube.com/watch?v=..." aria-describedby="url-help" required>
+          <button id="inspect-button" class="button button-primary" type="submit">動画を確認</button>
+        </div>
+        <p id="url-help" class="field-help">例：YouTubeの動画ページにある「共有」からリンクをコピーできます。</p>
+      </div>
+    </form>
+
+    <section id="video-preview" class="preview-section" aria-labelledby="preview-heading" hidden>
+      <div class="preview-heading">
+        <p class="eyebrow">STEP 2</p>
+        <h2 id="preview-heading">保存する内容を選ぶ</h2>
+      </div>
+      <div class="video-summary">
+        <div class="thumbnail-wrap">
+          <img id="video-thumbnail" src="" alt="" loading="lazy" hidden>
+          <div id="thumbnail-placeholder" class="thumbnail-placeholder" aria-hidden="true">▶</div>
+        </div>
+        <div class="video-meta">
+          <h3 id="video-title">動画タイトル</h3>
+          <p id="video-uploader" class="muted-text"></p>
+          <p id="video-duration" class="meta-line"></p>
+        </div>
+      </div>
+
+      <fieldset class="target-fieldset">
+        <legend>何を保存しますか？</legend>
+        <div class="choice-grid choice-grid-two">
+          <label class="choice-card is-selected">
+            <input type="radio" name="target" value="video" checked>
+            <span class="choice-content">
+              <span class="choice-title">動画で保存</span>
+              <span class="choice-description">映像と音声を一緒に保存</span>
+            </span>
+          </label>
+          <label class="choice-card">
+            <input type="radio" name="target" value="audio">
+            <span class="choice-content">
+              <span class="choice-title">音声だけ保存</span>
+              <span class="choice-description">音楽や講義を音声ファイルに</span>
+            </span>
+          </label>
+        </div>
+      </fieldset>
+
+      <div id="simple-options" class="simple-options" aria-live="polite">
+        <div id="simple-video-note" class="setting-summary">
+          <span class="setting-summary-title">かんたん設定</span>
+          <span>MP4・最大720p</span>
+          <span class="setting-dot" aria-hidden="true">•</span>
+          <span>スマホでも再生しやすい形式</span>
+        </div>
+        <div id="simple-audio-note" class="setting-summary" hidden>
+          <span class="setting-summary-title">かんたん設定</span>
+          <span>MP3・192kbps</span>
+          <span class="setting-dot" aria-hidden="true">•</span>
+          <span>幅広い機器で再生できます</span>
+        </div>
+      </div>
+
+      <details id="advanced-settings" class="advanced-settings" hidden>
+        <summary>画質・形式を細かく選ぶ</summary>
+        <div class="advanced-grid">
+          <div id="video-settings" class="setting-group">
+            <div class="field">
+              <label for="video-format">動画形式</label>
+              <select id="video-format">
+                <option value="mp4">MP4（互換性重視）</option>
+                <option value="webm">WebM（元形式を活用）</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="video-height">画質の上限</label>
+              <select id="video-height"></select>
+              <p class="field-help">元動画より高い画質にはなりません。</p>
+            </div>
+          </div>
+          <div id="audio-settings" class="setting-group" hidden>
+            <div class="field">
+              <label for="audio-format">音声形式</label>
+              <select id="audio-format"></select>
+            </div>
+            <div id="mp3-quality-field" class="field">
+              <label for="mp3-quality">MP3音質</label>
+              <select id="mp3-quality">
+                <option value="128">128kbps（容量を小さく）</option>
+                <option value="192" selected>192kbps（おすすめ）</option>
+                <option value="320">320kbps（高音質）</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <p class="detail-note">容量の目安が分かる形式だけ選択肢に表示します。M4AとOpusは、取得できる音声をできるだけそのまま使います。</p>
+      </details>
+
+      <div class="action-row preview-actions">
+        <button id="submit-job" class="button button-primary" type="button">保存の準備を始める</button>
+        <button id="reset-workflow" class="button button-outline" type="button">別の動画を選ぶ</button>
+      </div>
+    </section>
+
+    <section id="job-panel" class="job-panel" aria-labelledby="job-heading" hidden>
+      <div class="preview-heading">
+        <p class="eyebrow">STEP 3</p>
+        <h2 id="job-heading">保存の準備をしています</h2>
+        <p id="job-message" role="status" aria-live="polite">順番を待っています</p>
+      </div>
+      <div class="progress-wrap">
+        <progress id="job-progress" max="100" value="0">0%</progress>
+        <span id="job-progress-label">0%</span>
+      </div>
+      <ol class="progress-steps" aria-label="保存処理の進み具合">
+        <li data-stage="waiting"><span>1</span>順番を確認</li>
+        <li data-stage="downloading"><span>2</span>YouTubeから取得</li>
+        <li data-stage="processing"><span>3</span>ファイルを整える</li>
+        <li data-stage="completed"><span>4</span>保存できます</li>
+      </ol>
+      <button id="cancel-job" class="button button-outline" type="button">処理を中止</button>
+    </section>
+
+    <section id="job-result" class="job-result" aria-labelledby="result-heading" hidden>
+      <div class="result-icon" aria-hidden="true">✓</div>
+      <div>
+        <p class="eyebrow">保存の準備ができました</p>
+        <h2 id="result-heading">この端末に保存できます</h2>
+        <p id="result-expiry" class="muted-text"></p>
+        <a id="download-link" class="button button-primary" href="#">この端末に保存</a>
+      </div>
+    </section>
+  </section>
+
+  <section class="after-section" aria-labelledby="recent-heading">
+    <div class="section-heading compact-heading">
+      <div>
+        <p class="eyebrow">あとから確認</p>
+        <h2 id="recent-heading">最近の保存</h2>
+      </div>
+      <a class="button button-outline" href="/history">保存履歴を見る</a>
+    </div>
+    {% if recent_jobs %}
+      <div class="recent-list">
+        {% for job in recent_jobs %}
+          <div class="recent-row">
+            <div>
+              <strong>{{ job.title }}</strong>
+              <span>{{ job.created_at_label }} · {{ job.status_label }}</span>
+            </div>
+            {% if job.can_download %}<a class="ghost-link" href="{{ job.download_url }}">保存する</a>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-state">まだ保存履歴はありません。上の入力欄から始めましょう。</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+

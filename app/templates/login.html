@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>ログイン — そら保存</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <section class="auth-intro" aria-labelledby="login-title">
+      <a class="brand brand-dark" href="/">
+        <span class="brand-mark" aria-hidden="true">↗</span>
+        <span>そら保存</span>
+      </a>
+      <p class="eyebrow">あなた専用の保存場所</p>
+      <h1 id="login-title">動画や音声を、<span class="blue-text">かんたん保存。</span></h1>
+      <p class="auth-copy">家族・知人から案内されたアカウントでログインしてください。</p>
+    </section>
+    <section class="auth-card" aria-labelledby="login-form-title">
+      <h2 id="login-form-title">ログイン</h2>
+      {% if error %}
+        <div class="notice notice-error" role="alert">{{ error }}</div>
+      {% endif %}
+      <form method="post" action="/login" class="stack-form">
+        <input type="hidden" name="next" value="{{ next_url or '/' }}">
+        <div class="field">
+          <label for="username">ユーザー名</label>
+          <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+        </div>
+        <div class="field">
+          <label for="password">パスワード</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="button button-primary button-wide" type="submit">ログインする</button>
+      </form>
+      <p class="form-note">アカウントが必要な場合は、管理者に発行を依頼してください。</p>
+    </section>
+  </main>
+</body>
+</html>
+

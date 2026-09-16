@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}保存履歴 — そら保存{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <section class="page-intro history-intro">
+    <div>
+      <p class="eyebrow">あなたの記録</p>
+      <h1>保存履歴</h1>
+      <p>完成したファイルは、保存の準備ができてから24時間で自動削除されます。</p>
+    </div>
+    <a class="button button-primary" href="/">新しい動画を保存</a>
+  </section>
+
+  <section class="surface-section history-section" aria-labelledby="history-table-heading">
+    <h2 id="history-table-heading" class="sr-only">保存履歴の一覧</h2>
+    {% if jobs %}
+      <div class="history-list">
+        {% for job in jobs %}
+          <article class="history-item" data-job-row="{{ job.id }}">
+            <div class="history-thumb">
+              {% if job.thumbnail %}<img src="{{ job.thumbnail }}" alt="" loading="lazy">{% else %}<span aria-hidden="true">▶</span>{% endif %}
+            </div>
+            <div class="history-main">
+              <h3>{{ job.title }}</h3>
+              <p class="history-meta">{{ job.created_at_label }} · {{ '動画' if job.target == 'video' else '音声' }} · {{ job.status_label }}</p>
+              {% if job.status == 'failed' %}<p class="history-error">{{ job.error_message }}</p>{% endif %}
+              {% if job.status == 'completed' %}<p class="history-expiry">{{ job.expires_at_label }}まで保存できます（{{ job.file_size_label }}）</p>{% endif %}
+            </div>
+            <div class="history-actions">
+              {% if job.can_download %}<a class="button button-primary" href="{{ job.download_url }}">保存する</a>{% endif %}
+              {% if job.can_cancel %}<button class="button button-outline" type="button" data-cancel-job="{{ job.id }}">中止</button>{% endif %}
+              <form method="post" action="/history/jobs/{{ job.id }}/delete" class="inline-form">
+                <input type="hidden" name="csrf" value="{{ csrf_token }}">
+                <button class="text-button danger-text" type="submit">履歴から削除</button>
+              </form>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state large-empty">
+        <h3>保存履歴はまだありません</h3>
+        <p>保存した動画はここで確認できます。</p>
+        <a class="button button-primary" href="/">最初の動画を保存する</a>
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+

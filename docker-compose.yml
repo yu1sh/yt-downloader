@@ -1,0 +1,128 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_SECRET_KEY: ${APP_SECRET_KEY:-development-only-secret-change-this-before-production}
+      DATA_DIR: /data
+      DENO_DIR: /tmp/deno
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-604800}
+      MAX_DURATION_SECONDS: ${MAX_DURATION_SECONDS:-7200}
+      MAX_JOB_BYTES: ${MAX_JOB_BYTES:-4294967296}
+      MAX_PENDING_PER_USER: ${MAX_PENDING_PER_USER:-3}
+      MAX_PENDING_TOTAL: ${MAX_PENDING_TOTAL:-20}
+      MIN_FREE_BYTES: ${MIN_FREE_BYTES:-5368709120}
+      FILE_TTL_SECONDS: ${FILE_TTL_SECONDS:-86400}
+      HISTORY_TTL_SECONDS: ${HISTORY_TTL_SECONDS:-604800}
+      INSPECT_TIMEOUT_SECONDS: ${INSPECT_TIMEOUT_SECONDS:-120}
+      DOWNLOAD_SOCKET_TIMEOUT_SECONDS: ${DOWNLOAD_SOCKET_TIMEOUT_SECONDS:-30}
+      JOB_TIMEOUT_SECONDS: ${JOB_TIMEOUT_SECONDS:-7200}
+      CLEANUP_INTERVAL_SECONDS: ${CLEANUP_INTERVAL_SECONDS:-300}
+      WORKER_POLL_SECONDS: ${WORKER_POLL_SECONDS:-2}
+    expose:
+      - "8000"
+    volumes:
+      - yt_data:/data
+    networks:
+      - private
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  worker:
+    build: .
+    command: ["python", "-m", "app.worker"]
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_SECRET_KEY: ${APP_SECRET_KEY:-development-only-secret-change-this-before-production}
+      DATA_DIR: /data
+      DENO_DIR: /tmp/deno
+      MAX_DURATION_SECONDS: ${MAX_DURATION_SECONDS:-7200}
+      MAX_JOB_BYTES: ${MAX_JOB_BYTES:-4294967296}
+      MIN_FREE_BYTES: ${MIN_FREE_BYTES:-5368709120}
+      FILE_TTL_SECONDS: ${FILE_TTL_SECONDS:-86400}
+      INSPECT_TIMEOUT_SECONDS: ${INSPECT_TIMEOUT_SECONDS:-120}
+      DOWNLOAD_SOCKET_TIMEOUT_SECONDS: ${DOWNLOAD_SOCKET_TIMEOUT_SECONDS:-30}
+      JOB_TIMEOUT_SECONDS: ${JOB_TIMEOUT_SECONDS:-7200}
+      WORKER_POLL_SECONDS: ${WORKER_POLL_SECONDS:-2}
+    volumes:
+      - yt_data:/data
+    networks:
+      - private
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  cleanup:
+    build: .
+    command: ["python", "-m", "app.cleanup"]
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      DATA_DIR: /data
+      FILE_TTL_SECONDS: ${FILE_TTL_SECONDS:-86400}
+      HISTORY_TTL_SECONDS: ${HISTORY_TTL_SECONDS:-604800}
+      CLEANUP_INTERVAL_SECONDS: ${CLEANUP_INTERVAL_SECONDS:-300}
+    volumes:
+      - yt_data:/data
+    networks:
+      - private
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - private
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  yt_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  private:

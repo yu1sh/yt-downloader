@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}処理ログ — そら保存{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <section class="page-intro">
+    <p class="eyebrow">管理者</p>
+    <h1>処理ログ</h1>
+    <p>利用者ごとの処理状態と、失敗したときの管理者向け詳細を確認できます。</p>
+  </section>
+  <section class="surface-section admin-log-section" aria-labelledby="admin-log-heading">
+    <h2 id="admin-log-heading">最近の処理</h2>
+    {% if jobs %}
+      <div class="admin-log-list">
+        {% for job in jobs %}
+          <article class="admin-log-row">
+            <div>
+              <strong>{{ job.title }}</strong>
+              <span>{{ job.username }} · {{ job.created_at_label }} · {{ job.status_label }}</span>
+            </div>
+            <div class="admin-log-detail">
+              {% if job.error_message %}<p>{{ job.error_message }}</p>{% endif %}
+              {% if job.error_detail %}
+                <details><summary>技術詳細を表示</summary><pre>{{ job.error_detail }}</pre></details>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-state">処理ログはまだありません。</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+

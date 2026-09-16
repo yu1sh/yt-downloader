@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}利用者管理 — そら保存{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <section class="page-intro">
+    <p class="eyebrow">管理者</p>
+    <h1>利用者を管理</h1>
+    <p>家族・知人のアカウントを作成、停止、パスワード再発行できます。</p>
+  </section>
+
+  {% if created_password %}
+    <div class="notice notice-success" role="status">
+      <strong>仮パスワードを発行しました</strong>
+      <span class="secret-value">{{ created_password }}</span>
+      <span>この画面を閉じると再表示できません。本人へ安全な方法で伝えてください。</span>
+    </div>
+  {% endif %}
+  {% if error %}<div class="notice notice-error" role="alert">{{ error }}</div>{% endif %}
+
+  <div class="admin-grid">
+    <section class="surface-section" aria-labelledby="new-user-heading">
+      <h2 id="new-user-heading">新しい利用者</h2>
+      <form method="post" action="/admin/users" class="stack-form">
+        <input type="hidden" name="csrf" value="{{ csrf_token }}">
+        <div class="field">
+          <label for="new-username">ユーザー名</label>
+          <input id="new-username" name="username" type="text" minlength="3" maxlength="32" required>
+          <p class="field-help">3〜32文字。空白とスラッシュは使えません。</p>
+        </div>
+        <div class="field">
+          <label for="initial-password">初期パスワード（任意）</label>
+          <input id="initial-password" name="initial_password" type="password" minlength="12" autocomplete="new-password">
+          <p class="field-help">空欄なら、使い捨ての仮パスワードを自動発行します。</p>
+        </div>
+        <button class="button button-primary" type="submit">利用者を作成</button>
+      </form>
+    </section>
+
+    <section class="surface-section" aria-labelledby="users-heading">
+      <h2 id="users-heading">登録済みの利用者</h2>
+      <div class="user-list">
+        {% for managed_user in users %}
+          <article class="user-row">
+            <div>
+              <strong>{{ managed_user.username }}</strong>
+              <span>{% if managed_user.is_admin %}管理者{% else %}利用者{% endif %} · {% if managed_user.is_active %}利用中{% else %}停止中{% endif %}{% if managed_user.must_change_password %} · パスワード変更待ち{% endif %}</span>
+            </div>
+            <div class="user-actions">
+              {% if managed_user.id != user.id %}
+                <form method="post" action="/admin/users/{{ managed_user.id }}/toggle" class="inline-form">
+                  <input type="hidden" name="csrf" value="{{ csrf_token }}">
+                  <button class="button button-outline" type="submit">{{ '停止する' if managed_user.is_active else '再開する' }}</button>
+                </form>
+              {% endif %}
+              {% if managed_user.id != user.id %}
+                <form method="post" action="/admin/users/{{ managed_user.id }}/reset" class="inline-form">
+                  <input type="hidden" name="csrf" value="{{ csrf_token }}">
+                  <button class="text-button" type="submit">仮パスワードを再発行</button>
+                </form>
+              {% endif %}
+            </div>
+          </article>
+        {% else %}
+          <p class="empty-state">利用者はいません。</p>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

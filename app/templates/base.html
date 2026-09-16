@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <meta name="color-scheme" content="light">
+  <title>{% block title %}そら保存{% endblock %}</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-inner">
+      <a class="brand" href="/" aria-label="そら保存のトップページ">
+        <span class="brand-mark" aria-hidden="true">↗</span>
+        <span>そら保存</span>
+        <span class="brand-note">yt-dlp</span>
+      </a>
+      <nav class="primary-nav" aria-label="メインメニュー">
+        <a href="/">保存する</a>
+        <a href="/history">保存履歴</a>
+        {% if user.is_admin %}
+          <a href="/admin/users">利用者管理</a>
+          <a href="/admin/jobs">処理ログ</a>
+        {% endif %}
+      </nav>
+      <div class="nav-actions">
+        <button id="large-text-toggle" class="text-button" type="button" aria-pressed="false">文字を大きく</button>
+        <a class="account-link" href="/account/password">{{ user.username }}</a>
+        <form method="post" action="/logout" class="inline-form">
+          <input type="hidden" name="csrf" value="{{ csrf_token }}">
+          <button class="text-button" type="submit">ログアウト</button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <p class="footer-brand">そら保存</p>
+        <p>家族・知人で使う、シンプルな保存場所</p>
+      </div>
+      <div class="footer-links">
+        <a href="/">動画を保存</a>
+        <a href="/history">保存履歴</a>
+        <a href="/account/password">パスワード変更</a>
+      </div>
+      <p class="footer-small">保存ファイルは完成から24時間で自動削除されます。</p>
+    </div>
+  </footer>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
+
