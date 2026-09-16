@@ -209,8 +209,12 @@ button:disabled {
 }
 
 .hero-inner {
-  padding: 88px 0 80px;
+  padding: 48px 0 32px;
   text-align: center;
+}
+
+.hero-inner h1 {
+  margin-bottom: 0;
 }
 
 .eyebrow {
@@ -825,6 +829,10 @@ progress {
   padding-top: var(--space-12);
 }
 
+.hero-section + .page-wrap {
+  padding-top: 32px;
+}
+
 .page-intro {
   margin-bottom: var(--space-8);
 }
@@ -1165,7 +1173,11 @@ progress {
   }
 
   .hero-inner {
-    padding: 64px 0 56px;
+    padding: 32px 0 24px;
+  }
+
+  .hero-section + .page-wrap {
+    padding-top: 24px;
   }
 
   .small-only {
