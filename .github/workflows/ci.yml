@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git ls-files | grep -E '(^|/)(\.env|.*\.db(-shm|-wal)?$|data/)'; then
+          if git ls-files | grep -E '(^|/)(\.env$|.*\.db(-shm|-wal)?$|data/)'; then
             echo "::error::Production data or environment files must not be committed."
             exit 1
           fi
