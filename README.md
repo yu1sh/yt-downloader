@@ -63,13 +63,13 @@ sudo systemctl restart cloudflared
 3. 最初の管理者を作成します。
 
    ```sh
-   docker compose exec app python -m app.manage create-admin admin
+   docker compose exec app python -m app.manage create-admin oishi
    ```
 
    パスワードを指定しない場合は仮パスワードを表示します。管理者は初回ログイン後にパスワードを変更してください。固定の初期パスワードを使う場合は、端末の履歴やプロセス一覧に残らない運用で次のように実行します。
 
    ```sh
-   docker compose exec app python -m app.manage create-admin admin --password '12文字以上の安全な値'
+   docker compose exec app python -m app.manage create-admin oishi --password '12文字以上の安全な値'
    ```
 
 管理者画面の「利用者管理」から家族・知人のアカウントを作成できます。初期パスワードを空欄にすると仮パスワードを表示し、本人が初回ログインで変更します。

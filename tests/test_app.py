@@ -36,7 +36,7 @@ def test_settings(tmp_path, monkeypatch):
     settings.ensure_paths()
     init_db(settings.db_path)
     db = connect(settings.db_path)
-    create_user(db, "admin", "correct horse battery", is_admin=True)
+    create_user(db, "oishi", "correct horse battery", is_admin=True)
     db.close()
     return settings
 
@@ -58,7 +58,7 @@ async def async_client(test_settings, monkeypatch):
             yield client
 
 
-async def login(client: AsyncClient, username: str = "admin", password: str = "correct horse battery") -> str:
+async def login(client: AsyncClient, username: str = "oishi", password: str = "correct horse battery") -> str:
     response = await client.post(
         "/login",
         data={"username": username, "password": password, "next": "/"},
