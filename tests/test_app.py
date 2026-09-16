@@ -84,6 +84,7 @@ async def test_login_and_authenticated_page(async_client):
     assert "あなた専用の保存場所" not in page.text
     assert "スマホにもパソコンにも保存できます。" not in page.text
     assert "動画を確認" in page.text
+    assert "保存先を選んで保存" in page.text
     assert "MP3・320kbps" in page.text
     assert page.text.index('value="audio"') < page.text.index('value="video"')
     assert 'value="audio" checked' in page.text
