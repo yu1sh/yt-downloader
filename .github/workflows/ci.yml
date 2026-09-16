@@ -1,0 +1,186 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt pip-audit
+
+      - name: Check Python and JavaScript syntax
+        run: |
+          python -m compileall -q app tests
+          node --check app/static/app.js
+
+      - name: Audit dependencies
+        run: pip-audit -r requirements.txt
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+
+  secret-and-data-check:
+    name: Secret and data check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Reject production data and private design files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-files | grep -E '(^|/)(\.env|.*\.db(-shm|-wal)?$|data/)'; then
+            echo "::error::Production data or environment files must not be committed."
+            exit 1
+          fi
+          if git ls-files | grep -Fx 'DESIGN.md'; then
+            echo "::error::DESIGN.md must not be published."
+            exit 1
+          fi
+
+  deploy:
+    name: Deploy to Debian
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, secret-and-data-check]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Validate deployment settings
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DEPLOY_KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
+          TS_OAUTH_CLIENT_ID: ${{ vars.TS_OAUTH_CLIENT_ID }}
+          TS_AUDIENCE: ${{ vars.TS_AUDIENCE }}
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          for setting in DEPLOY_HOST DEPLOY_PORT DEPLOY_USER DEPLOY_PATH DEPLOY_KNOWN_HOSTS TS_OAUTH_CLIENT_ID TS_AUDIENCE; do
+            if [[ -z "${!setting:-}" ]]; then
+              echo "::error::Set $setting in the production environment."
+              exit 1
+            fi
+          done
+          if [[ ! "$DEPLOY_HOST" =~ ^[A-Za-z0-9.-]+$ ]]; then
+            echo "::error::DEPLOY_HOST must be a hostname or IPv4 address."
+            exit 1
+          fi
+          if [[ ! "$DEPLOY_PORT" =~ ^[0-9]{1,5}$ ]] || (( DEPLOY_PORT < 1 || DEPLOY_PORT > 65535 )); then
+            echo "::error::DEPLOY_PORT must be between 1 and 65535."
+            exit 1
+          fi
+          if [[ ! "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
+            echo "::error::DEPLOY_USER contains unsupported characters."
+            exit 1
+          fi
+          if [[ "$DEPLOY_PATH" != /* || "$DEPLOY_PATH" == *$'\n'* || "$DEPLOY_PATH" == *$'\r'* ]]; then
+            echo "::error::DEPLOY_PATH must be an absolute path without line breaks."
+            exit 1
+          fi
+          if [[ ! "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::The workflow commit SHA is invalid."
+            exit 1
+          fi
+
+      - name: Configure SSH
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$DEPLOY_SSH_KEY" ]]; then
+            echo "::error::Set DEPLOY_SSH_KEY as a secret in the production environment."
+            exit 1
+          fi
+          install -d -m 700 "$RUNNER_TEMP/deploy-ssh"
+          umask 077
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/deploy-ssh/id_ed25519"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$RUNNER_TEMP/deploy-ssh/known_hosts"
+          if ! ssh-keygen -y -P "" -f "$RUNNER_TEMP/deploy-ssh/id_ed25519" >/dev/null 2>&1; then
+            echo "::error::DEPLOY_SSH_KEY must be a valid, unencrypted SSH private key."
+            exit 1
+          fi
+          known_hosts_name="$DEPLOY_HOST"
+          if [[ "$DEPLOY_PORT" != "22" ]]; then
+            known_hosts_name="[$DEPLOY_HOST]:$DEPLOY_PORT"
+          fi
+          if ! ssh-keygen -F "$known_hosts_name" -f "$RUNNER_TEMP/deploy-ssh/known_hosts" >/dev/null; then
+            echo "::error::DEPLOY_KNOWN_HOSTS has no host key for $known_hosts_name."
+            exit 1
+          fi
+
+      - name: Connect GitHub Actions runner to Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ vars.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ vars.TS_AUDIENCE }}
+          tags: tag:ci
+          ping: ${{ vars.DEPLOY_HOST }}
+
+      - name: Deploy
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          remote_path_b64="$(printf '%s' "$DEPLOY_PATH" | base64 -w 0)"
+          git archive --format=tar "$DEPLOY_SHA" |
+            ssh -T \
+              -p "$DEPLOY_PORT" \
+              -i "$RUNNER_TEMP/deploy-ssh/id_ed25519" \
+              -o BatchMode=yes \
+              -o IdentitiesOnly=yes \
+              -o StrictHostKeyChecking=yes \
+              -o UpdateHostKeys=no \
+              -o ClearAllForwardings=yes \
+              -o "UserKnownHostsFile=$RUNNER_TEMP/deploy-ssh/known_hosts" \
+              -o GlobalKnownHostsFile=/dev/null \
+              -o ConnectTimeout=15 \
+              "$DEPLOY_USER@$DEPLOY_HOST" \
+              "deploy $DEPLOY_SHA $remote_path_b64"
