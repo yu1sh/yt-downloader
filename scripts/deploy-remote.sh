@@ -389,6 +389,9 @@ if [[ ! "$domain" =~ ^[A-Za-z0-9.-]+$ || "$domain" == .* || "$domain" == *. || "
   exit 1
 fi
 
+compose_run "$previous_release" stop app worker cleanup caddy
+services_stopped=1
+
 backup_stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 backup_dir="$(mktemp -d "$backup_root/$backup_stamp-$deploy_sha.XXXXXXXX")"
 chmod 0700 "$backup_dir"
@@ -396,7 +399,7 @@ app_backup_image="$app_image"
 docker run --rm \
   --network none \
   --user 0:0 \
-  --mount "type=volume,src=$runtime_volume,dst=/source,readonly" \
+  --mount "type=volume,src=$runtime_volume,dst=/source" \
   --mount "type=bind,src=$backup_dir,dst=/backup" \
   --entrypoint python \
   "$app_backup_image" \
@@ -436,8 +439,6 @@ tar -tzf "$backup_dir/runtime-before.tar.gz" >/dev/null
   chmod 0600 deployment-sha
 )
 
-compose_run "$previous_release" stop app worker cleanup caddy
-services_stopped=1
 new_stack_started=1
 compose_run "$release_dir" up -d --no-build app worker cleanup caddy
 
@@ -461,4 +462,3 @@ mv -Tf -- "$temporary_link" "$expected_path/.cd-current"
 services_stopped=0
 new_stack_started=0
 echo "Deployed $deploy_sha to $expected_path."
-
