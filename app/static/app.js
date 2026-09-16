@@ -63,6 +63,96 @@
     }
   }
 
+  const SAVE_PICKER_MIME_TYPES = {
+    ".mp4": "video/mp4",
+    ".webm": "video/webm",
+    ".mp3": "audio/mpeg",
+    ".m4a": "audio/mp4",
+    ".opus": "audio/ogg",
+  };
+
+  function showSavePickerMessage(message, type = "error") {
+    if (document.getElementById("app-alert")) {
+      setAlert(message, type);
+    } else if (message) {
+      window.alert(message);
+    }
+  }
+
+  function savePickerOptions(filename) {
+    const suggestedName = filename || "youtube-file";
+    const extensionMatch = suggestedName.toLowerCase().match(/\.[a-z0-9]+$/);
+    const extension = extensionMatch ? extensionMatch[0] : "";
+    const mimeType = SAVE_PICKER_MIME_TYPES[extension];
+    const options = { suggestedName };
+    if (mimeType) {
+      options.types = [{
+        description: "メディアファイル",
+        accept: { [mimeType]: [extension] },
+      }];
+    }
+    return options;
+  }
+
+  async function saveWithPicker(button) {
+    const url = button.dataset.savePickerUrl;
+    const filename = button.dataset.savePickerFilename || "youtube-file";
+    if (!url) {
+      showSavePickerMessage("保存できるファイルがありません");
+      return;
+    }
+    if (typeof window.showSaveFilePicker !== "function") {
+      showSavePickerMessage("このブラウザは保存先の選択に対応していません。通常の保存ボタンをお使いください。", "info");
+      return;
+    }
+
+    setButtonBusy(button, true, "保存しています…");
+    try {
+      // This must run directly from the user's click while transient activation is active.
+      const fileHandle = await window.showSaveFilePicker(savePickerOptions(filename));
+      const response = await fetch(url, { credentials: "same-origin" });
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
+          return;
+        }
+        throw new Error("ファイルを取得できませんでした");
+      }
+
+      const writable = await fileHandle.createWritable();
+      try {
+        if (response.body) {
+          await response.body.pipeTo(writable);
+        } else {
+          await writable.write(await response.blob());
+          await writable.close();
+        }
+      } catch (error) {
+        await writable.abort().catch(() => {});
+        throw error;
+      }
+      showSavePickerMessage("ファイルを保存しました", "success");
+    } catch (error) {
+      if (error?.name !== "AbortError") {
+        showSavePickerMessage(error.message || "ファイルを保存できませんでした");
+      }
+    } finally {
+      setButtonBusy(button, false);
+    }
+  }
+
+  function initSavePickerButtons() {
+    const buttons = document.querySelectorAll(".save-picker-button");
+    const supported = typeof window.showSaveFilePicker === "function";
+    buttons.forEach((button) => {
+      if (!supported) return;
+      button.hidden = false;
+      button.addEventListener("click", () => saveWithPicker(button));
+    });
+    const help = document.getElementById("save-picker-help");
+    if (help && supported) help.hidden = false;
+  }
+
   function populateSelect(select, items, selectedValue) {
     if (!select) return;
     select.replaceChildren();
@@ -204,6 +294,11 @@
       const link = document.getElementById("download-link");
       link.href = job.download_url;
       link.setAttribute("download", job.filename || "youtube-file");
+      const pickerButton = document.getElementById("save-picker-button");
+      if (pickerButton) {
+        pickerButton.dataset.savePickerUrl = job.download_url || "";
+        pickerButton.dataset.savePickerFilename = job.filename || "youtube-file";
+      }
     } else if (["failed", "cancelled", "interrupted", "expired"].includes(job.status)) {
       heading.textContent = job.status === "failed" ? "保存できませんでした" : (job.status_label || "処理が終了しました");
       result.hidden = true;
@@ -353,4 +448,5 @@
   initLargeText();
   initDownloader();
   initHistoryActions();
+  initSavePickerButtons();
 })();
