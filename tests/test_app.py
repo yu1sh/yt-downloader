@@ -80,7 +80,9 @@ async def test_login_and_authenticated_page(async_client):
     csrf = await login(async_client)
     page = await async_client.get("/")
     assert page.status_code == 200
-    assert "動画や音声を、" in page.text
+    assert "簡単Youtubeダウンローダー" in page.text
+    assert "あなた専用の保存場所" not in page.text
+    assert "スマホにもパソコンにも保存できます。" not in page.text
     assert "動画を確認" in page.text
     assert "MP3・320kbps" in page.text
     assert page.text.index('value="audio"') < page.text.index('value="video"')

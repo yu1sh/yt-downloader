@@ -113,8 +113,8 @@ async def lifespan(application: FastAPI):
 
 
 app = FastAPI(
-    title="そら保存",
-    description="家族・知人向けYouTube動画・音声保存サイト",
+    title="YT保存",
+    description="YouTube動画・音声保存サイト",
     openapi_url=None,
     docs_url=None,
     redoc_url=None,

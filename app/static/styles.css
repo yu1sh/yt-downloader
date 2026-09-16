@@ -1,10 +1,10 @@
 :root {
-  --color-apple-blue: #0071e3;
-  --color-link-blue: #0066cc;
-  --color-signal-blue: #2997ff;
+  --color-primary-red: #c43d4a;
+  --color-link-red: #a63742;
+  --color-signal-red: #d86e74;
   --color-carbon: #1d1d1f;
-  --color-frost: #f5f5f7;
-  --color-ice: #f4f8fb;
+  --color-frost: #fff8f7;
+  --color-ice: #fff1f0;
   --color-smoke: #333333;
   --color-graphite: #474747;
   --color-ash: #707070;
@@ -16,8 +16,8 @@
   --color-success-bg: #e9f6ed;
   --color-error: #9e2b25;
   --color-error-bg: #fff1f0;
-  --color-info: #174f7b;
-  --color-info-bg: #eaf4fb;
+  --color-info: #6b3942;
+  --color-info-bg: #fff0f1;
   --font-display: "SF Pro Display", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-text: "SF Pro Text", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --spacing-unit: 4px;
@@ -63,7 +63,7 @@ body.large-text {
 }
 
 a {
-  color: var(--color-link-blue);
+  color: var(--color-link-red);
 }
 
 button,
@@ -87,7 +87,7 @@ button:disabled {
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-signal-blue);
+  outline: 3px solid var(--color-signal-red);
   outline-offset: 3px;
 }
 
@@ -146,7 +146,7 @@ button:disabled {
   height: 28px;
   place-items: center;
   color: #fff;
-  background: var(--color-apple-blue);
+  background: var(--color-primary-red);
   border-radius: 50%;
   font-size: 18px;
   line-height: 1;
@@ -195,7 +195,7 @@ button:disabled {
 
 .text-button {
   padding: 6px 0;
-  color: var(--color-link-blue);
+  color: var(--color-link-red);
   background: transparent;
   border: 0;
 }
@@ -261,10 +261,6 @@ h3 {
 
 p {
   margin-bottom: 16px;
-}
-
-.blue-text {
-  color: var(--color-link-blue);
 }
 
 .hero-copy {
@@ -340,7 +336,7 @@ p {
 
 .mode-button.is-active {
   color: #fff;
-  background: var(--color-apple-blue);
+  background: var(--color-primary-red);
 }
 
 .notice {
@@ -405,8 +401,8 @@ p {
 
 .field input:focus,
 .field select:focus {
-  border-color: var(--color-link-blue);
-  outline: 3px solid rgba(41, 151, 255, 0.28);
+  border-color: var(--color-link-red);
+  outline: 3px solid rgba(216, 110, 116, 0.3);
   outline-offset: 0;
 }
 
@@ -442,25 +438,25 @@ p {
 
 .button-primary {
   color: #fff;
-  background: var(--color-apple-blue);
-  border: 1px solid var(--color-apple-blue);
+  background: var(--color-primary-red);
+  border: 1px solid var(--color-primary-red);
 }
 
 .button-primary:hover {
-  background: #005fbe;
-  border-color: #005fbe;
+  background: #a9323c;
+  border-color: #a9323c;
 }
 
 .button-outline {
-  color: var(--color-link-blue);
+  color: var(--color-link-red);
   background: transparent;
-  border: 1px solid var(--color-link-blue);
+  border: 1px solid var(--color-link-red);
 }
 
 .button-outline:hover {
-  color: #004f9e;
+  color: #8e2633;
   background: var(--color-ice);
-  border-color: #004f9e;
+  border-color: #8e2633;
 }
 
 .button-wide {
@@ -471,7 +467,7 @@ p {
   padding: var(--space-6);
   margin: 0 0 var(--space-10);
   background: var(--color-ice);
-  border: 1px solid #d6e7f3;
+  border: 1px solid #f0d3d1;
   border-radius: var(--radius-card);
 }
 
@@ -525,7 +521,7 @@ p {
   height: 56px;
   place-items: center;
   color: #fff;
-  background: var(--color-signal-blue);
+  background: var(--color-signal-red);
   border-radius: 50%;
   font-size: 22px;
 }
@@ -576,7 +572,7 @@ p {
 
 .choice-card:hover,
 .choice-card.is-selected {
-  border-color: var(--color-link-blue);
+  border-color: var(--color-link-red);
 }
 
 .choice-card.is-selected {
@@ -591,7 +587,7 @@ p {
 }
 
 .choice-card input:focus-visible + .choice-content {
-  outline: 3px solid var(--color-signal-blue);
+  outline: 3px solid var(--color-signal-red);
   outline-offset: 4px;
 }
 
@@ -628,7 +624,7 @@ p {
 }
 
 .setting-dot {
-  color: var(--color-signal-blue);
+  color: var(--color-signal-red);
 }
 
 .advanced-settings {
@@ -638,7 +634,7 @@ p {
 
 .advanced-settings summary {
   padding: 20px 0;
-  color: var(--color-link-blue);
+  color: var(--color-link-red);
   font-size: 17px;
   font-weight: 600;
   cursor: pointer;
@@ -682,7 +678,7 @@ progress {
   width: 100%;
   height: 14px;
   overflow: hidden;
-  accent-color: var(--color-apple-blue);
+  accent-color: var(--color-primary-red);
 }
 
 .progress-wrap span {
@@ -727,8 +723,8 @@ progress {
 .progress-steps li.is-current span,
 .progress-steps li.is-done span {
   color: #fff;
-  background: var(--color-apple-blue);
-  border-color: var(--color-apple-blue);
+  background: var(--color-primary-red);
+  border-color: var(--color-primary-red);
 }
 
 .job-result {
@@ -1004,7 +1000,7 @@ progress {
 }
 
 .admin-log-detail summary {
-  color: var(--color-link-blue);
+  color: var(--color-link-red);
   font-size: 14px;
   cursor: pointer;
 }
@@ -1280,4 +1276,3 @@ progress {
     transition-duration: 0.01ms !important;
   }
 }
-
