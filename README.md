@@ -48,6 +48,7 @@ Debian 12以降、2 vCPU、メモリ4GB、空き容量30GB以上を初期想定�
     service: https://localhost:443
     originRequest:
       noTLSVerify: true
+      originServerName: <公開ホスト名>
 ```
 
 DNSルートをまだ作っていない場合は、Tunnelの認証済み環境で次を実行します。
