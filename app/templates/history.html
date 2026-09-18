@@ -28,8 +28,8 @@
             </div>
             <div class="history-actions">
               {% if job.can_download %}
-                <a class="button button-primary" href="{{ job.download_url }}">保存する</a>
-                <button class="button button-outline save-picker-button" type="button" hidden data-save-picker-url="{{ job.download_url }}" data-save-picker-filename="{{ job.filename }}">保存先を選んで保存</button>
+                <button class="button button-primary save-picker-button" type="button" hidden data-save-picker-url="{{ job.download_url }}" data-save-picker-filename="{{ job.filename }}">保存先を選んで保存</button>
+                <a class="button button-outline" href="{{ job.download_url }}">保存する</a>
               {% endif %}
               {% if job.can_cancel %}<button class="button button-outline" type="button" data-cancel-job="{{ job.id }}">中止</button>{% endif %}
               <form method="post" action="/history/jobs/{{ job.id }}/delete" class="inline-form">
